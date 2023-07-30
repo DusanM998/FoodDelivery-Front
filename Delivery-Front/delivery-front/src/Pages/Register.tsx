@@ -1,0 +1,115 @@
+import React, {useState} from 'react'
+import { SD_Roles } from '../Utility/SD';
+import { inputHelper, toastNotify } from '../Helper';
+import { useRegisterUserMutation } from '../apis/authApi';
+import { apiResponse } from '../Interfaces';
+import { useNavigate } from 'react-router-dom';
+import { MainLoader } from '../Components/Page/Common';
+
+function Register() {
+  const [registerUser] = useRegisterUserMutation();
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [userInput, setUserInput] = useState({
+    userName: "",
+    password: "",
+    role: "",
+    name: "",
+  });
+
+  const handleUserInput = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const tempData = inputHelper(e, userInput);
+    setUserInput(tempData);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const response: apiResponse = await registerUser({
+      userName: userInput.userName,
+      password: userInput.password,
+      role: userInput.role,
+      name: userInput.name,
+    });
+
+    if (response.data) {
+      //console.log(response.data);
+      toastNotify("Uspešna registracija!");
+      navigate("/login");
+    }
+    else if(response.error){
+      toastNotify(response.error.data.errorMessages[0], "error");
+    }
+
+    setLoading(false);
+  }
+
+  return (
+    <div className="container text-center">
+      { loading && <MainLoader /> }
+    <form method="post" onSubmit={handleSubmit}>
+      <h1 className="mt-5">Registruj se</h1>
+      <div className="mt-5">
+        <div className="col-sm-6 offset-sm-3 col-xs-12 mt-4">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Unesite Korisničko Ime"
+            required
+            name = "userName"
+            value = {userInput.userName}
+            onChange={handleUserInput}
+          />
+        </div>
+        <div className="col-sm-6 offset-sm-3 col-xs-12 mt-4">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Unesite Ime"
+            required
+            name = "name"
+            value={userInput.name}
+            onChange={handleUserInput}
+          />
+        </div>
+        <div className="col-sm-6 offset-sm-3 col-xs-12 mt-4">
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Unesite Lozinku"
+            required
+            name = "password"
+            value={userInput.password}
+            onChange={handleUserInput}
+          />
+        </div>
+        <div className="col-sm-6 offset-sm-3 col-xs-12 mt-4">
+            <select
+              className="form-control form-select"
+              required
+              name = "role"
+              value={userInput.role}
+              onChange={handleUserInput}>
+            <option value="">--Izaberi Ulogu--</option>
+            <option value={`${SD_Roles.CUSTOMER}`}>Customer</option>
+            <option value={`${SD_Roles.ADMIN}`}>Admin</option>
+          </select>
+        </div>
+      </div>
+      <div className="mt-5">
+        <button type="submit"
+          className="btn btn-outlined rounded-pill text-white mx-2"
+          style={{ width: "200px", backgroundColor:"#8d3d5b" }}
+          disabled={loading}>
+          Registruj se
+        </button>
+      </div>
+    </form>
+    </div>
+  )
+}
+
+export default Register
